@@ -26,10 +26,10 @@ steps {
 junit '**/target/surefire-reports/*.xml'
 }
 }
-stage('Publish Coverage Report') {
-steps {
-jacoco()
-}
-}
+        stage('Publish Coverage Report') {
+            steps {
+                recordCoverage(tools: [[parser: 'JACOCO', pattern: 'target/site/jacoco/jacoco.xml']])
+            }
+        }
 }
 }
