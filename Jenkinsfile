@@ -63,35 +63,13 @@ pipeline {
                         )
                     ]) {
                     powershell '''
-                $docker = "C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
+    $token = $env:DOCKER_TOKEN.Trim()
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($token)
+    $hash = [System.Security.Cryptography.SHA256]::Create().ComputeHash($bytes)
+    $hex = [BitConverter]::ToString($hash).Replace("-", "").ToLower()
 
-                $psi = New-Object System.Diagnostics.ProcessStartInfo
-                $psi.FileName = $docker
-                $psi.Arguments = "login -u holuses --password-stdin"
-                $psi.UseShellExecute = $false
-                $psi.RedirectStandardInput = $true
-                $psi.RedirectStandardOutput = $true
-                $psi.RedirectStandardError = $true
-
-                $process = New-Object System.Diagnostics.Process
-                $process.StartInfo = $psi
-                $process.Start() | Out-Null
-
-                $process.StandardInput.Write($env:DOCKER_TOKEN.Trim())
-                $process.StandardInput.Close()
-
-                $stdout = $process.StandardOutput.ReadToEnd()
-                $stderr = $process.StandardError.ReadToEnd()
-
-                $process.WaitForExit()
-
-                Write-Host $stdout
-
-                if ($process.ExitCode -ne 0) {
-                    Write-Error $stderr
-                    exit $process.ExitCode
-                }
-            '''
+    Write-Host "Jenkins token SHA256: $hex"
+'''
 
                     bat '"C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" push holuses/temperature-converter:latest'
                 }
