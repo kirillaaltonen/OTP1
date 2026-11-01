@@ -45,13 +45,12 @@ pipeline {
         }
         stage('Check Docker') {
             steps {
-                bat 'where docker'
-                bat 'docker --version'
+                bat '"C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" --version'
             }
         }
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t kirillaaltonen/temperature-converter:latest .'
+                bat '"C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" build -t kirillaaltonen/temperature-converter:latest .'
             }
         }
 
@@ -64,8 +63,8 @@ pipeline {
                             passwordVariable: 'DOCKER_PASS'
                         )
                     ]) {
-                    bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
-                    bat 'docker push kirillaaltonen/temperature-converter:latest'
+                    bat 'echo %DOCKER_PASS% | "C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" login -u %DOCKER_USER% --password-stdin'
+                    bat '"C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" push kirillaaltonen/temperature-converter:latest'
                 }
             }
         }
