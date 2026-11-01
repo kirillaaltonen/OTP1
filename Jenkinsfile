@@ -63,13 +63,35 @@ pipeline {
                         )
                     ]) {
                     powershell '''
-    $token = $env:DOCKER_TOKEN.Trim()
+                $docker = "C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
 
-    Write-Host "Token length before trim:" $env:DOCKER_TOKEN.Length
-    Write-Host "Token length after trim:" $token.Length
+                $psi = New-Object System.Diagnostics.ProcessStartInfo
+                $psi.FileName = $docker
+                $psi.Arguments = "login -u holuses --password-stdin"
+                $psi.UseShellExecute = $false
+                $psi.RedirectStandardInput = $true
+                $psi.RedirectStandardOutput = $true
+                $psi.RedirectStandardError = $true
 
-    $token | & "C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" login -u holuses --password-stdin
-'''
+                $process = New-Object System.Diagnostics.Process
+                $process.StartInfo = $psi
+                $process.Start() | Out-Null
+
+                $process.StandardInput.Write($env:DOCKER_TOKEN.Trim())
+                $process.StandardInput.Close()
+
+                $stdout = $process.StandardOutput.ReadToEnd()
+                $stderr = $process.StandardError.ReadToEnd()
+
+                $process.WaitForExit()
+
+                Write-Host $stdout
+
+                if ($process.ExitCode -ne 0) {
+                    Write-Error $stderr
+                    exit $process.ExitCode
+                }
+            '''
 
                     bat '"C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" push holuses/temperature-converter:latest'
                 }
