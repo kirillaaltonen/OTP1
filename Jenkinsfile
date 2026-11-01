@@ -65,35 +65,31 @@ pipeline {
                     powershell '''
                 $docker = "C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
 
-                $psi = New-Object System.Diagnostics.ProcessStartInfo
-                $psi.FileName = $docker
-                $psi.Arguments = "login -u holuses --password-stdin"
-                $psi.UseShellExecute = $false
-                $psi.RedirectStandardInput = $true
-                $psi.RedirectStandardOutput = $true
-                $psi.RedirectStandardError = $true
+                $dockerConfig = Join-Path $env:WORKSPACE ".docker"
+                New-Item -ItemType Directory -Force -Path $dockerConfig | Out-Null
 
-                $process = New-Object System.Diagnostics.Process
-                $process.StartInfo = $psi
-                $process.Start() | Out-Null
+                $loginString = "holuses:" + $env:DOCKER_TOKEN.Trim()
+                $bytes = [System.Text.Encoding]::UTF8.GetBytes($loginString)
+                $auth = [Convert]::ToBase64String($bytes)
 
-                $process.StandardInput.Write($env:DOCKER_TOKEN.Trim())
-                $process.StandardInput.Close()
+                $config = @{
+                    auths = @{
+                        "https://index.docker.io/v1/" = @{
+                            auth = $auth
+                        }
+                    }
+                }
 
-                $stdout = $process.StandardOutput.ReadToEnd()
-                $stderr = $process.StandardError.ReadToEnd()
+                $config | ConvertTo-Json -Depth 5 | Set-Content -Encoding ASCII "$dockerConfig\\config.json"
 
-                $process.WaitForExit()
+                $env:DOCKER_CONFIG = $dockerConfig
 
-                Write-Host $stdout
+                & $docker push holuses/temperature-converter:latest
 
-                if ($process.ExitCode -ne 0) {
-                    Write-Error $stderr
-                    exit $process.ExitCode
+                if ($LASTEXITCODE -ne 0) {
+                    exit $LASTEXITCODE
                 }
             '''
-
-                    bat '"C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" push holuses/temperature-converter:latest'
                 }
             }
         }
