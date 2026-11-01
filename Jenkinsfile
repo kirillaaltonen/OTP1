@@ -43,7 +43,12 @@ pipeline {
                 )
             }
         }
-
+        stage('Check Docker') {
+            steps {
+                bat 'where docker'
+                bat 'docker --version'
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 bat 'docker build -t kirillaaltonen/temperature-converter:latest .'
