@@ -57,14 +57,13 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 withCredentials([
-                        usernamePassword(
-                            credentialsId: 'holuses_docker',
-                            usernameVariable: 'DOCKER_USER',
-                            passwordVariable: 'DOCKER_PASS'
+                        string(
+                            credentialsId: 'dockerhub_token',
+                            variable: 'DOCKER_TOKEN'
                         )
                     ]) {
                     powershell '''
-                $env:DOCKER_PASS | & "C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" login -u $env:DOCKER_USER --password-stdin
+                $env:DOCKER_TOKEN | & "C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" login -u holuses --password-stdin
             '''
 
                     bat '"C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" push holuses/temperature-converter:latest'
