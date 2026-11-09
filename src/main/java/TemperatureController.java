@@ -48,6 +48,8 @@ public class TemperatureController {
 
     private ResourceBundle bundle;
 
+    private String currentLanguage = "en";
+
     private int sessionId;
 
     private final TemperatureConverter converter =
@@ -66,54 +68,76 @@ public class TemperatureController {
 
         languageComboBox.setValue("English");
 
-        languageComboBox.setOnAction(event -> changeLanguage());
+        languageComboBox.setOnAction(
+                event -> changeLanguage()
+        );
 
-        loadLanguage(new Locale("en", "US"));
+        loadLanguage(
+                new Locale("en", "US")
+        );
 
-        sessionId = Database.createSession();
+        sessionId =
+                Database.createSession();
     }
 
     private void changeLanguage() {
 
-        String language = languageComboBox.getValue();
+        String language =
+                languageComboBox.getValue();
 
         switch (language) {
 
             case "Finnish":
-                loadLanguage(new Locale("fi", "FI"));
+                loadLanguage(
+                        new Locale("fi", "FI")
+                );
                 break;
 
             case "Swedish":
-                loadLanguage(new Locale("sv", "SE"));
+                loadLanguage(
+                        new Locale("sv", "SE")
+                );
                 break;
 
             case "Japanese":
-                loadLanguage(new Locale("ja", "JP"));
+                loadLanguage(
+                        new Locale("ja", "JP")
+                );
                 break;
 
             case "Arabic":
-                loadLanguage(new Locale("ar"));
+                loadLanguage(
+                        new Locale("ar")
+                );
                 break;
 
             default:
-                loadLanguage(new Locale("en", "US"));
+                loadLanguage(
+                        new Locale("en", "US")
+                );
                 break;
         }
     }
 
     private void loadLanguage(Locale locale) {
 
-        bundle = ResourceBundle.getBundle(
-                "MessagesBundle",
-                locale
-        );
+        currentLanguage =
+                locale.getLanguage();
+
+        bundle =
+                ResourceBundle.getBundle(
+                        "MessagesBundle",
+                        locale
+                );
 
         titleLabel.setText(
                 bundle.getString("title")
         );
 
         temperatureField.setPromptText(
-                bundle.getString("temperaturePrompt")
+                bundle.getString(
+                        "temperaturePrompt"
+                )
         );
 
         convertButton.setText(
@@ -124,34 +148,93 @@ public class TemperatureController {
                 bundle.getString("result")
         );
 
+        speedTitleLabel.setText(
+                bundle.getString(
+                        "speedTitle"
+                )
+        );
+
+        calculateSpeedButton.setText(
+                bundle.getString(
+                        "calculateSpeed"
+                )
+        );
+
+        UnitInfo celsius =
+                UnitDAO.getUnit(
+                        "CELSIUS",
+                        currentLanguage
+                );
+
+        UnitInfo fahrenheit =
+                UnitDAO.getUnit(
+                        "FAHRENHEIT",
+                        currentLanguage
+                );
+
+        UnitInfo kelvin =
+                UnitDAO.getUnit(
+                        "KELVIN",
+                        currentLanguage
+                );
+
+        UnitInfo distance =
+                UnitDAO.getUnit(
+                        "DISTANCE",
+                        currentLanguage
+                );
+
+        UnitInfo time =
+                UnitDAO.getUnit(
+                        "TIME",
+                        currentLanguage
+                );
+
+        UnitInfo speed =
+                UnitDAO.getUnit(
+                        "SPEED",
+                        currentLanguage
+                );
+
         unitComboBox.getItems().clear();
 
         unitComboBox.getItems().addAll(
-                bundle.getString("fahrenheitToCelsius"),
-                bundle.getString("celsiusToFahrenheit"),
-                bundle.getString("kelvinToCelsius")
+
+                fahrenheit.getName()
+                        + " → "
+                        + celsius.getName(),
+
+                celsius.getName()
+                        + " → "
+                        + fahrenheit.getName(),
+
+                kelvin.getName()
+                        + " → "
+                        + celsius.getName()
         );
 
-        unitComboBox.getSelectionModel().selectFirst();
-
-        speedTitleLabel.setText(
-                bundle.getString("speedTitle")
-        );
+        unitComboBox
+                .getSelectionModel()
+                .selectFirst();
 
         distanceField.setPromptText(
                 bundle.getString("distance")
+                        + " ("
+                        + distance.getName()
+                        + ")"
         );
 
         timeField.setPromptText(
                 bundle.getString("time")
-        );
-
-        calculateSpeedButton.setText(
-                bundle.getString("calculateSpeed")
+                        + " ("
+                        + time.getName()
+                        + ")"
         );
 
         speedResultLabel.setText(
                 bundle.getString("speed")
+                        + " "
+                        + speed.getName()
         );
     }
 
@@ -160,9 +243,10 @@ public class TemperatureController {
 
         try {
 
-            double value = Double.parseDouble(
-                    temperatureField.getText()
-            );
+            double value =
+                    Double.parseDouble(
+                            temperatureField.getText()
+                    );
 
             int selectedIndex =
                     unitComboBox
@@ -171,42 +255,76 @@ public class TemperatureController {
 
             double result;
 
+            String fromUnit;
+            String toUnit;
+
             if (selectedIndex == 0) {
 
                 result =
-                        converter.fahrenheitToCelsius(value);
+                        converter
+                                .fahrenheitToCelsius(
+                                        value
+                                );
+
+                fromUnit =
+                        "FAHRENHEIT";
+
+                toUnit =
+                        "CELSIUS";
 
             } else if (selectedIndex == 1) {
 
                 result =
-                        converter.celsiusToFahrenheit(value);
+                        converter
+                                .celsiusToFahrenheit(
+                                        value
+                                );
+
+                fromUnit =
+                        "CELSIUS";
+
+                toUnit =
+                        "FAHRENHEIT";
 
             } else {
 
                 result =
-                        converter.kelvinToCelsius(value);
-            }
+                        converter
+                                .kelvinToCelsius(
+                                        value
+                                );
 
-            String conversionType =
-                    unitComboBox.getValue();
+                fromUnit =
+                        "KELVIN";
+
+                toUnit =
+                        "CELSIUS";
+            }
 
             Database.saveConversion(
                     sessionId,
                     value,
-                    conversionType,
-                    result
+                    fromUnit,
+                    toUnit,
+                    result,
+                    currentLanguage
             );
 
             resultLabel.setText(
                     bundle.getString("result")
                             + ": "
-                            + String.format("%.2f", result)
+                            + String.format(
+                            "%.2f",
+                            result
+                    )
             );
 
         } catch (NumberFormatException e) {
 
             resultLabel.setText(
-                    bundle.getString("invalidNumbers")
+                    bundle.getString(
+                            "invalidNumbers"
+                    )
             );
         }
     }
@@ -229,18 +347,32 @@ public class TemperatureController {
             if (time <= 0) {
 
                 speedResultLabel.setText(
-                        bundle.getString("invalidTime")
+                        bundle.getString(
+                                "invalidTime"
+                        )
                 );
 
                 return;
             }
 
-            double speed = distance / time;
+            double speed =
+                    distance / time;
+
+            UnitInfo speedUnit =
+                    UnitDAO.getUnit(
+                            "SPEED",
+                            currentLanguage
+                    );
 
             speedResultLabel.setText(
                     bundle.getString("speed")
                             + " "
-                            + String.format("%.2f", speed)
+                            + String.format(
+                            "%.2f",
+                            speed
+                    )
+                            + " "
+                            + speedUnit.getName()
             );
 
             Database.saveSpeedCalculation(
@@ -252,30 +384,47 @@ public class TemperatureController {
         } catch (NumberFormatException e) {
 
             speedResultLabel.setText(
-                    bundle.getString("invalidNumbers")
+                    bundle.getString(
+                            "invalidNumbers"
+                    )
             );
         }
     }
+
     @FXML
     private void showSpeedHistory() {
 
-        Stage historyStage = new Stage();
+        Stage historyStage =
+                new Stage();
 
-        TextArea textArea = new TextArea();
+        TextArea textArea =
+                new TextArea();
+
         textArea.setEditable(false);
 
         textArea.setText(
                 Database.getSpeedHistory()
         );
 
-        VBox root = new VBox(textArea);
+        VBox root =
+                new VBox(textArea);
 
-        Scene scene = new Scene(root, 600, 400);
+        Scene scene =
+                new Scene(
+                        root,
+                        600,
+                        400
+                );
 
-        historyStage.setTitle("Speed History");
+        historyStage.setTitle(
+                "Speed History"
+        );
+
         historyStage.setScene(scene);
+
         historyStage.show();
     }
+
     @FXML
     private void showHistory() {
 
@@ -295,7 +444,11 @@ public class TemperatureController {
                 new VBox(textArea);
 
         Scene scene =
-                new Scene(root, 500, 400);
+                new Scene(
+                        root,
+                        500,
+                        400
+                );
 
         historyStage.setTitle(
                 "Conversion History"
