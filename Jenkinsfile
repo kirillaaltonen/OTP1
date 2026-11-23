@@ -43,11 +43,28 @@ pipeline {
                 )
             }
         }
+
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarCloud') {
+                    bat '''
+                mvn sonar:sonar ^
+                -Dsonar.projectKey=kirillaaltonen_OTP1 ^
+                -Dsonar.organization=kirillaaltonen ^
+                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+            '''
+                }
+            }
+        }
+
+
         stage('Check Docker') {
             steps {
                 bat '"C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" --version'
             }
         }
+
         stage('Build Docker Image') {
             steps {
                 bat '"C:\\Users\\alokas\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe" build -t holuses/temperature-converter:latest .'
