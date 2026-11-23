@@ -45,11 +45,12 @@ pipeline {
         }
 
 
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarCloud') {
                     bat '''
-                mvn sonar:sonar ^
+                mvn org.sonarsource.scanner.maven:sonar-maven-plugin:5.9.0.7382:sonar ^
                 -Dsonar.projectKey=kirillaaltonen_OTP1 ^
                 -Dsonar.organization=kirillaaltonen ^
                 -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
@@ -57,6 +58,7 @@ pipeline {
                 }
             }
         }
+
 
 
         stage('Check Docker') {
